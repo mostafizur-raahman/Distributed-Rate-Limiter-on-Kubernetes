@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: rate-limiter-api
+    labels:
+        app: rate-limiter-api
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            app: rate-limiter-api
+    template:
+        metadata:
+            labels:
+                app: rate-limiter-api
+        spec:
+            containers:
+                - name: api
+                  image: your-registry/rate-limiter-api:latest
+                  ports:
+                      - containerPort: 3000
+                  env:
+                      - name: REDIS_URL
+                        value: "redis://redis:6379"
+                      - name: PORT
+                        value: "3000"
+                  resources:
+                      requests:
+                          memory: "128Mi"
+                          cpu: "100m"
+                      limits:
+                          memory: "256Mi"
+                          cpu: "300m"
+                  readinessProbe:
+                      httpGet:
+                          path: /ready
+                          port: 3000
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                      failureThreshold: 3
+                  livenessProbe:
+                      httpGet:
+                          path: /health
+                          port: 3000
+                      initialDelaySeconds: 10
+                      periodSeconds: 15
+                      failureThreshold: 3
